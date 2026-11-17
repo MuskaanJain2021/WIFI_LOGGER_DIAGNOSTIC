@@ -38,7 +38,7 @@ static esp_netif_t *s_wifi_sta_netif = NULL;
 static esp_netif_t *s_wifi_ap_netif = NULL;
 static httpd_handle_t s_webserver_handle = NULL;
 static SemaphoreHandle_t s_semph_get_ip_addrs = NULL;
-// Add this near the top of the file with the other static variables
+
 static dns_server_handle_t s_dns_server_handle = NULL;
 static char s_ap_ssid_name_copy[32] = {0};
 static bool s_softap_initialized = false;
@@ -56,7 +56,7 @@ extern const uint8_t wifi_html_gz_end[] asm("_binary_wifi_html_gz_end");
 extern const uint8_t favicon_ico_start[] asm("_binary_esp32_wifi_provision_care_favicon_ico_start");
 extern const uint8_t favicon_ico_end[] asm("_binary_esp32_wifi_provision_care_favicon_ico_end");
 
-// MARK: - Core Infrastructure Subsystem Infrastructure
+// Core Infrastructure Subsystem Infrastructure
 static void stop_provisioning_services(void)
 {
     if (s_webserver_handle)
@@ -101,7 +101,7 @@ static void prov_watchdog_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
-// MARK: - Thread-Safe State Management
+// Thread-Safe State Management
 
 static void set_wifi_state(wifi_state_t new_state)
 {
@@ -168,7 +168,7 @@ static void url_decode(char *dst, const char *src, size_t dst_size)
     dst[j] = '\0';
 }
 
-// MARK: - HTTP Server URI Handlers
+// HTTP Server URI Handlers
 
 static esp_err_t favicon_get_handler(httpd_req_t *req)
 {
@@ -367,12 +367,12 @@ static esp_err_t savewifi_post_handler(httpd_req_t *req)
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Flash Write Failure");
         return ESP_FAIL;
     }
-
+    
     ESP_LOGI(TAG, "Target configuration committed safely. Device rebooting in 3 seconds.");
     httpd_resp_set_type(req, "text/html");
     httpd_resp_send(req, "Settings Secured Successfully. Unit System Restarting...", HTTPD_RESP_USE_STRLEN);
 
-    // call the separate static worker function we defined earlier
+    
     xTaskCreate(delayed_restart_task, "delayed_restart", 2048, NULL, tskIDLE_PRIORITY, NULL);
 
     return ESP_OK;
@@ -391,7 +391,7 @@ static esp_err_t scanap_get_handler(httpd_req_t *req)
     wifi_scan_config_t scan_config = {
         .ssid = NULL, .bssid = NULL, .channel = 0, .show_hidden = false, .scan_type = WIFI_SCAN_TYPE_ACTIVE};
 
-    // Safe background operational scanning hook validation
+    /* Blocking scan, running in the httpd task - the portal stops responding for 2-4 s and AP clients may see the link stutter. Async scan planned. */
     esp_err_t err = esp_wifi_scan_start(&scan_config, true);
     if (err != ESP_OK)
     {
@@ -475,7 +475,7 @@ static httpd_handle_t start_webserver(void)
     return server;
 }
 
-// MARK: - OTA Firmware Engine (Hardened against Timeout crashing)
+// OTA Firmware Engine (Hardened against Timeout crashing)
 
 esp_err_t wifi_provision_care_updateota_post_handler(httpd_req_t *req)
 {
@@ -555,11 +555,11 @@ esp_err_t wifi_provision_care_updateota_post_handler(httpd_req_t *req)
     httpd_resp_set_type(req, "text/html");
     httpd_resp_send(req, "Firmware updated seamlessly. Rebooting system structural blocks...", HTTPD_RESP_USE_STRLEN);
 
-    // Find this block at the end of the OTA handler and replace it:
+    
     httpd_resp_set_type(req, "text/html");
     httpd_resp_send(req, "Firmware updated seamlessly. Rebooting system structural blocks...", HTTPD_RESP_USE_STRLEN);
 
-    // FIX: Change the lambda to a clean C task create call
+    
     xTaskCreate(ota_reboot_task, "ota_reboot", 2048, NULL, tskIDLE_PRIORITY, NULL);
 
     vTaskDelay(pdMS_TO_TICKS(2000));
@@ -639,7 +639,7 @@ static void wifi_init_softap(void)
     // FIX: Spawn background tracking watchdog and return cleanly without blocking execution flow!
     xTaskCreate(prov_watchdog_task, "prov_wdog", 2048, NULL, tskIDLE_PRIORITY, NULL);
 }
-// MARK: - FreeRTOS Decoupled Async Operational Handlers
+// FreeRTOS Decoupled Async Operational Handlers
 
 static void wifi_retry_task(void *param)
 {
@@ -709,7 +709,7 @@ static void sta_ip_event_handler(void *arg, esp_event_base_t base, int32_t id, v
     }
 }
 
-// MARK: - Core Public API Entry Point
+// Core Public API Entry Point
 
 void wifi_provision_care(const char ap_ssid_name[32])
 {
@@ -737,7 +737,7 @@ void wifi_provision_care(const char ap_ssid_name[32])
         strncpy(s_ap_ssid_name_copy, ap_ssid_name, sizeof(s_ap_ssid_name_copy) - 1);
     }
 
-    // Guarded Singleton Initializations (Crash-Proof Re-entry)
+    
     esp_err_t err = esp_netif_init();
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
         ESP_ERROR_CHECK(err);
@@ -802,7 +802,7 @@ void wifi_provision_care(const char ap_ssid_name[32])
         return;
     }
 
-    // Validate operational final conditions safely
+    
     _lock_acquire(&s_state_lock);
 
     if (s_retry_num > 5)
