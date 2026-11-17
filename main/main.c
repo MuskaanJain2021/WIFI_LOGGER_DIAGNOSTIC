@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: 2026 Muskaan Jain
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+
 #include "ESP32_WIFI_Provision_Care.h"
 #include <stdio.h>
 #include <inttypes.h>
