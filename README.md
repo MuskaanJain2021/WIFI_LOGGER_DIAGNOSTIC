@@ -365,7 +365,7 @@ boundary of what it is currently suitable for.
 
 ## License
 
-GNU GPLv3. `dns_server.c` and `dns_server.h` are from Espressif's captive portal example
-and remain under CC0-1.0 / Unlicense as marked in their headers.
+GNU GPLv3 — see [LICENSE](LICENSE) for the full text.
 
-> SPDX headers still need to be added to the project's own source files.
+`dns_server.c` and `dns_server.h` are from Espressif's captive portal example and remain
+under CC0-1.0 / Unlicense as marked in their headers.
